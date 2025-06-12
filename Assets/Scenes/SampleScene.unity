@@ -5408,7 +5408,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &625290549
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8781,6 +8781,7 @@ MonoBehaviour:
   backButton: {fileID: 487751536}
   currentScene: {fileID: 625290548}
   scene2: {fileID: 1817301466}
+  object2DApiClient: {fileID: 1860059144}
 --- !u!1 &1360820720
 GameObject:
   m_ObjectHideFlags: 0

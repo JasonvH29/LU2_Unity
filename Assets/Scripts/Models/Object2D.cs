@@ -9,13 +9,13 @@ using UnityEngine;
 [Serializable]
 public class Object2D
 {
-    public Guid? id;
+    public string id;
 
     public string prefabId;
 
-    public float positionX;
+    public int positionX; // Change to int
 
-    public float positionY;
+    public int positionY; // Change to int
 
-    public string environmentId;
+    public string environmentId; // Change to Guid
 }

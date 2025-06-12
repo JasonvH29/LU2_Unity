@@ -10,7 +10,7 @@ namespace YourNamespace.ApiClient
     {
         public WebClient webClient;
 
-        public async Awaitable<IWebRequestReponse> ReadObject2Ds(string environmentId)
+        public async Task<IWebRequestReponse> ReadObject2Ds(string environmentId)
         {
             string route = $"/api/object2d/environment/{environmentId}"; // Use environmentId in the route
             Debug.Log($"Sending GET request to: {route}");
@@ -19,14 +19,14 @@ namespace YourNamespace.ApiClient
             return ParseObject2DListResponse(webRequestResponse);
         }
 
-        public async Awaitable<IWebRequestReponse> CreateObject2D(Object2D object2D)
+        public async Task<IWebRequestReponse> CreateObject2D(Object2D object2D)
         {
             string route = $"/api/object2d"; // Use the base route for creating a new object2D
-            string data = JsonUtility.ToJson(object2D);
-            Debug.Log($"Sending POST request to: {route} with data: {data}");
+            string jsonData = JsonUtility.ToJson(object2D);
+            Debug.Log($"Sending POST request to: {route} with data: {jsonData}");
             try
             {
-                IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, data);
+                IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, jsonData);
                 Debug.Log($"Received response: {webRequestResponse}");
                 return ParseObject2DResponse(webRequestResponse);
             }
@@ -37,20 +37,19 @@ namespace YourNamespace.ApiClient
             }
         }
 
-
-        public async Awaitable<IWebRequestReponse> DeleteObject2D(string object2DId)
+        public async Task<IWebRequestReponse> DeleteObject2D(string object2DId)
         {
             string route = $"/api/object2d/{object2DId}"; // Use the base route for deleting an object2D
             Debug.Log($"Sending DELETE request to: {route}");
             return await webClient.SendDeleteRequest(route);
         }
 
-        public async Awaitable<IWebRequestReponse> UpdateObject2D(string object2DId, Object2D object2D)
+        public async Task<IWebRequestReponse> UpdateObject2D(string object2DId, Object2D object2D)
         {
             string route = $"/api/object2d/{object2DId}"; // Use the base route for updating an object2D
-            string data = JsonUtility.ToJson(object2D);
-            Debug.Log($"Sending PUT request to: {route} with data: {data}");
-            IWebRequestReponse webRequestResponse = await webClient.SendPutRequest(route, data); // Use SendPutRequest instead of SendPostRequest
+            string jsonData = JsonUtility.ToJson(object2D);
+            Debug.Log($"Sending PUT request to: {route} with data: {jsonData}");
+            IWebRequestReponse webRequestResponse = await webClient.SendPutRequest(route, jsonData); // Use SendPutRequest instead of SendPostRequest
             Debug.Log($"Received response: {webRequestResponse}");
             return ParseObject2DResponse(webRequestResponse);
         }
@@ -83,24 +82,27 @@ namespace YourNamespace.ApiClient
             }
         }
 
-        public async 
-        Task
-GetAllObject2DInfo(string environmentId)
+        public async Task GetAllObject2DInfo(string environmentId)
         {
-            Debug.LogError("Object2Ds are being loaded");
+            Debug.Log("Object2Ds are being loaded");
             IWebRequestReponse response = await ReadObject2Ds(environmentId);
             if (response is WebRequestData<List<Object2D>> object2DsData)
             {
                 List<Object2D> object2Ds = object2DsData.Data;
                 foreach (var object2D in object2Ds)
                 {
-                    Debug.Log($"ID: {object2D.id}, PrefabId: {object2D.prefabId}, PositionX: {object2D.positionX}, PositionY: {object2D.positionY},  EnvironmentId: {object2D.environmentId}");
+                    Debug.Log($"ID: {object2D.id}, PrefabId: {object2D.prefabId}, PositionX: {object2D.positionX}, PositionY: {object2D.positionY}, EnvironmentId: {object2D.environmentId}");
                 }
+            }
+            else if (response is WebRequestError error)
+            {
+                Debug.LogError($"Failed to retrieve object2Ds. Error: {error.ErrorMessage}");
             }
             else
             {
-                Debug.LogError("Failed to retrieve object2Ds.");
+                Debug.LogError("Failed to retrieve object2Ds. Unknown error.");
             }
         }
     }
 }
+

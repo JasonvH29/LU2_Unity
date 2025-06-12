@@ -1,7 +1,7 @@
+using System;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using System;
 using System.Collections.Generic;
 using YourNamespace.ApiClient;
 
@@ -38,16 +38,16 @@ public class CreateWorldScript : MonoBehaviour
     private string environmentName2;
     private string environmentName3;
 
-    private string environmentId1;
-    private string environmentId2;
-    private string environmentId3;
+    private Guid environmentId1;
+    private Guid environmentId2;
+    private Guid environmentId3;
 
     private int currentEnvironmentIndex;
     private ObjectManager objectManager;
 
     void Start()
     {
-        objectManager = gameObject.AddComponent<ObjectManager>();
+        objectManager = FindObjectOfType<ObjectManager>();
 
         CreateEnvironment1.onClick.AddListener(() =>
         {
@@ -67,9 +67,9 @@ public class CreateWorldScript : MonoBehaviour
             CreateEnvironment(environmentNameInputField3.text);
         });
 
-        enterButton1.onClick.AddListener(() => GoToScene3());
-        enterButton2.onClick.AddListener(() => GoToScene3());
-        enterButton3.onClick.AddListener(() => GoToScene3());
+        enterButton1.onClick.AddListener(() => SetActiveEnvironment(1));
+        enterButton2.onClick.AddListener(() => SetActiveEnvironment(2));
+        enterButton3.onClick.AddListener(() => SetActiveEnvironment(3));
 
         deleteButton1.onClick.AddListener(() => DeleteEnvironment(1));
         deleteButton2.onClick.AddListener(() => DeleteEnvironment(2));
@@ -185,15 +185,15 @@ public class CreateWorldScript : MonoBehaviour
                     {
                         case 1:
                             environmentName1 = created.name;
-                            environmentId1 = created.id;
+                            environmentId1 = Guid.Parse(created.id);
                             break;
                         case 2:
                             environmentName2 = created.name;
-                            environmentId2 = created.id;
+                            environmentId2 = Guid.Parse(created.id);
                             break;
                         case 3:
                             environmentName3 = created.name;
-                            environmentId3 = created.id;
+                            environmentId3 = Guid.Parse(created.id);
                             break;
                     }
 
@@ -202,6 +202,7 @@ public class CreateWorldScript : MonoBehaviour
 
                     UpdateUI();
                     BackToScene2();
+                    objectManager?.SetActiveEnvironmentId(created.id);
                     break;
 
                 case WebRequestError errorResponse:
@@ -249,9 +250,9 @@ public class CreateWorldScript : MonoBehaviour
         environmentName1 = null;
         environmentName2 = null;
         environmentName3 = null;
-        environmentId1 = null;
-        environmentId2 = null;
-        environmentId3 = null;
+        environmentId1 = Guid.Empty;
+        environmentId2 = Guid.Empty;
+        environmentId3 = Guid.Empty;
 
         for (int i = 0; i < environments.Count; i++)
         {
@@ -259,15 +260,15 @@ public class CreateWorldScript : MonoBehaviour
             {
                 case 0:
                     environmentName1 = environments[i].name;
-                    environmentId1 = environments[i].id;
+                    environmentId1 = Guid.Parse(environments[i].id);
                     break;
                 case 1:
                     environmentName2 = environments[i].name;
-                    environmentId2 = environments[i].id;
+                    environmentId2 = Guid.Parse(environments[i].id);
                     break;
                 case 2:
                     environmentName3 = environments[i].name;
-                    environmentId3 = environments[i].id;
+                    environmentId3 = Guid.Parse(environments[i].id);
                     break;
             }
         }
@@ -283,33 +284,33 @@ public class CreateWorldScript : MonoBehaviour
             return;
         }
 
-        string environmentId = null;
+        Guid environmentId = Guid.Empty;
         switch (index)
         {
             case 1:
                 environmentId = environmentId1;
                 environmentName1 = null;
-                environmentId1 = null;
+                environmentId1 = Guid.Empty;
                 break;
             case 2:
                 environmentId = environmentId2;
                 environmentName2 = null;
-                environmentId2 = null;
+                environmentId2 = Guid.Empty;
                 break;
             case 3:
                 environmentId = environmentId3;
                 environmentName3 = null;
-                environmentId3 = null;
+                environmentId3 = Guid.Empty;
                 break;
         }
 
-        if (environmentId != null)
+        if (environmentId != Guid.Empty)
         {
             try
             {
                 Debug.Log($"Attempting to delete environment with ID: {environmentId}");
 
-                IWebRequestReponse objectResponse = await object2DApiClient.ReadObject2Ds(environmentId);
+                IWebRequestReponse objectResponse = await object2DApiClient.ReadObject2Ds(environmentId.ToString());
                 if (objectResponse is WebRequestData<List<Object2D>> object2DListResponse)
                 {
                     List<Object2D> object2DList = object2DListResponse.Data;
@@ -328,7 +329,7 @@ public class CreateWorldScript : MonoBehaviour
                     Debug.LogError($"Failed to fetch Object2Ds for environment ID: {environmentId}. Error: {objectError.ErrorMessage}");
                 }
 
-                IWebRequestReponse webRequestResponse = await environment2DApiClient.DeleteEnvironment(environmentId);
+                IWebRequestReponse webRequestResponse = await environment2DApiClient.DeleteEnvironment(environmentId.ToString());
 
                 switch (webRequestResponse)
                 {
@@ -356,51 +357,24 @@ public class CreateWorldScript : MonoBehaviour
     public void SetActiveEnvironment(int index)
     {
         Debug.Log($"Environment {index} is now active.");
-        LoadObjectsForEnvironment(index);
+
+        switch (index)
+        {
+            case 1:
+                objectManager?.SetActiveEnvironmentId(environmentId1.ToString());
+                break;
+            case 2:
+                objectManager?.SetActiveEnvironmentId(environmentId2.ToString());
+                break;
+            case 3:
+                objectManager?.SetActiveEnvironmentId(environmentId3.ToString());
+                break;
+        }
+
+        objectManager?.LoadObjects();
 
         Scene3.SetActive(true);
         Scene2.SetActive(false);
-
-        switch (index)
-        {
-            case 1:
-                objectManager.SetActiveEnvironmentId(environmentId1);
-                break;
-            case 2:
-                objectManager.SetActiveEnvironmentId(environmentId2);
-                break;
-            case 3:
-                objectManager.SetActiveEnvironmentId(environmentId3);
-                break;
-        }
-    }
-
-    private async void LoadObjectsForEnvironment(int index)
-    {
-        if (!IsUserLoggedIn())
-        {
-            Debug.LogWarning("User is not logged in. Please log in first.");
-            return;
-        }
-
-        string environmentId = null;
-        switch (index)
-        {
-            case 1:
-                environmentId = environmentId1;
-                break;
-            case 2:
-                environmentId = environmentId2;
-                break;
-            case 3:
-                environmentId = environmentId3;
-                break;
-        }
-
-        if (environmentId != null)
-        {
-            await object2DApiClient.GetAllObject2DInfo(environmentId);
-        }
     }
 
     public void GoToScene3() { Scene2.SetActive(false); Scene3.SetActive(true); }
@@ -414,3 +388,6 @@ public class CreateWorldScript : MonoBehaviour
         environmentNameInputField3.text = "";
     }
 }
+
+
+
